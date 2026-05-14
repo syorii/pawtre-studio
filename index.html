@@ -1455,7 +1455,7 @@
   }
 
   // ─── Generate — Real AI Integration ───
-  async function generatePortrait() {
+async function generatePortrait() {
     if (!hasImage) {
       alert('Please upload a photo of your pet first!');
       return;
@@ -1467,7 +1467,6 @@
     const regen = document.getElementById('regenBtn');
     const generateBtn = document.querySelector('.btn-generate');
 
-    // Show loading state
     output.style.display = 'block';
     loading.style.display = 'flex';
     result.style.display = 'none';
@@ -1476,7 +1475,6 @@
 
     output.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // Update loading messages while waiting
     const messages = [
       'Preparing the royal canvas…',
       'Mixing the finest pigments…',
@@ -1492,7 +1490,6 @@
     }, 3000);
 
     try {
-      // Get the selected props
       const selectedProps = Array.from(document.querySelectorAll('.prop-btn.active'))
         .map(btn => {
           const label = btn.querySelector('.prop-label')?.textContent?.toLowerCase();
@@ -1505,15 +1502,12 @@
         })
         .filter(Boolean);
 
-      // Get style key from selected index
       const styleKeys = ['renaissance', 'oil', 'modern', 'watercolour', 'cosmic'];
       const currentStyleKey = styleKeys[selectedStyle];
-
-      // Get the uploaded image as base64
       const imageBase64 = document.getElementById('preview-img').src;
 
-      // Call our Netlify function
-      const response = await fetch('/.netlify/functions/generate-portrait', {
+      // ── STEP 1: Submit the generation request ──
+      const submitResp = await fetch('/.netlify/functions/generate-portrait', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1523,27 +1517,63 @@
         })
       });
 
-      const data = await response.json();
+      const submitData = await submitResp.json();
+      if (!submitResp.ok || !submitData.success) {
+        throw new Error(submitData.error || 'Submission failed');
+      }
+
+      const { statusUrl, responseUrl } = submitData;
+
+      // ── STEP 2: Poll fal.ai for completion ──
+      let attempts = 0;
+      const maxAttempts = 80; // 80 × 3s = 4 minutes max
+      let finalImageUrl = null;
+
+      while (attempts < maxAttempts) {
+        await new Promise(r => setTimeout(r, 3000));
+        attempts++;
+
+        const statusResp = await fetch('/.netlify/functions/check-portrait', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: statusUrl })
+        });
+        const statusData = await statusResp.json();
+
+        if (statusData.status === 'COMPLETED') {
+          const resultResp = await fetch('/.netlify/functions/check-portrait', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: responseUrl })
+          });
+          const resultData = await resultResp.json();
+          finalImageUrl = resultData.images?.[0]?.url;
+          break;
+        }
+
+        if (statusData.status === 'FAILED' || statusData.status === 'CANCELLED') {
+          throw new Error(`Generation ${statusData.status.toLowerCase()}`);
+        }
+        // status is IN_QUEUE or IN_PROGRESS — keep polling
+      }
+
+      if (!finalImageUrl) {
+        throw new Error('Generation took too long. Please try again.');
+      }
 
       clearInterval(msgInterval);
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Generation failed');
-      }
-
-      // ── SUCCESS — Show the generated portrait ──
+      // ── Display the portrait ──
       loading.style.display = 'none';
       result.style.display = 'block';
 
       const portrait = document.getElementById('generatedPortrait');
-
-      // Replace emoji placeholder with real generated image
       portrait.innerHTML = '';
       portrait.style.background = 'none';
       portrait.style.minHeight = 'auto';
 
       const generatedImg = document.createElement('img');
-      generatedImg.src = data.imageUrl;
+      generatedImg.src = finalImageUrl;
       generatedImg.style.cssText = 'width:100%;height:auto;display:block;border-radius:4px;';
       generatedImg.alt = `${styleNames[selectedStyle]} portrait of your pet`;
 
@@ -1563,9 +1593,7 @@
       portrait.appendChild(generatedImg);
       portrait.appendChild(overlay);
 
-      // Store the generated image URL for checkout
-      window.currentPortraitUrl = data.imageUrl;
-
+      window.currentPortraitUrl = finalImageUrl;
       isGenerated = true;
       regen.style.display = 'block';
 
@@ -1573,7 +1601,6 @@
       clearInterval(msgInterval);
       console.error('Generation error:', error);
 
-      // Show error message
       loading.style.display = 'none';
       result.style.display = 'block';
 
@@ -1593,7 +1620,6 @@
       `;
 
     } finally {
-      // Reset generate button
       generateBtn.textContent = '✦ Generate Portrait';
       generateBtn.disabled = false;
     }
