@@ -642,6 +642,10 @@
     background: rgba(201,169,110,0.05);
   }
   .frame-icon { font-size: 28px; margin-bottom: 8px; }
+  .frame-swatch { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 10px; border: 1px solid var(--border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.15); }
+  .frame-swatch-black   { background: linear-gradient(135deg, #2a221a, #0d0805); }
+  .frame-swatch-white   { background: linear-gradient(135deg, #f7f2e8, #e8dfc8); border-color: rgba(26,20,16,0.15); }
+  .frame-swatch-natural { background: linear-gradient(135deg, #d6ad7e, #a5784b); }
   .frame-name { font-size: 12px; color: var(--dark); }
   .frame-price { font-size: 11px; color: var(--gold); margin-top: 4px; }
 
@@ -1305,23 +1309,23 @@
       </label>
     </div>
 
-    <!-- Frame options -->
+  <!-- Frame options (matches Prodigi GLOBAL-BOX-12X16 colours) -->
     <div class="sidebar-label">Choose Frame Finish</div>
     <div class="frame-options">
-      <div class="frame-opt active" onclick="setFrame(this)">
-        <div class="frame-icon">🖤</div>
-        <div class="frame-name">Matte Black</div>
+      <div class="frame-opt active" data-color="Classic Black" onclick="setFrame(this)">
+        <div class="frame-swatch frame-swatch-black"></div>
+        <div class="frame-name">Classic Black</div>
         <div class="frame-price">Included</div>
       </div>
-      <div class="frame-opt" onclick="setFrame(this)">
-        <div class="frame-icon">🤍</div>
-        <div class="frame-name">Antique White</div>
+      <div class="frame-opt" data-color="Pure White" onclick="setFrame(this)">
+        <div class="frame-swatch frame-swatch-white"></div>
+        <div class="frame-name">Pure White</div>
         <div class="frame-price">Included</div>
       </div>
-      <div class="frame-opt" onclick="setFrame(this)">
-        <div class="frame-icon">🟡</div>
-        <div class="frame-name">Gold Leaf</div>
-        <div class="frame-price">+$20</div>
+      <div class="frame-opt" data-color="Natural Oak" onclick="setFrame(this)">
+        <div class="frame-swatch frame-swatch-natural"></div>
+        <div class="frame-name">Natural Oak</div>
+        <div class="frame-price">Included</div>
       </div>
     </div>
 
@@ -1632,8 +1636,6 @@
       t += parseInt(txt) || 0;
     });
     if (t === 0) t = 89; // default to framed
-    const goldFrame = document.querySelector('.frame-opt.active .frame-price');
-    if (goldFrame && goldFrame.textContent.includes('+')) t += 20;
     document.getElementById('totalPrice').textContent = '$' + t;
   }
 
@@ -1658,11 +1660,9 @@
       });
     }
 
-    // Check if gold frame was selected
-    const goldFrame = document.querySelector('.frame-opt.active .frame-price');
-    if (goldFrame && goldFrame.textContent.includes('+')) {
-      items.push('goldframe');
-    }
+  // Read the selected frame color
+    const activeFrame = document.querySelector('.frame-opt.active');
+    const frameColor = activeFrame?.dataset.color || 'Classic Black';
 
     // Get customer email
     const emailInput = document.querySelector('.form-input[type="email"]');
@@ -1675,7 +1675,8 @@
         body: JSON.stringify({
           items: items,
           customerEmail: customerEmail,
-          portraitUrl: window.currentPortraitUrl || ''
+          portraitUrl: window.currentPortraitUrl || '',
+          frameColor: frameColor
         })
       });
 
