@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliate Program — Pawtré Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A96E; --gold-light: #E8D5A3; --gold-dark: #9B7A42;
+    --cream: #FAF6EF; --dark: #1A1410; --dark-2: #2C2218;
+    --mid: #6B5744; --border: rgba(201,169,110,0.25);
+    --border-strong: rgba(201,169,110,0.5);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--cream); color: var(--dark); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 300; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.4; }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 24px 60px; display: flex; align-items: center; justify-content: space-between; background: rgba(250,246,239,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 300; letter-spacing: 0.08em; color: var(--dark); text-decoration: none; }
+  .logo span { color: var(--gold); }
+  nav a { text-decoration: none; color: var(--mid); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.3s; }
+  nav a:hover { color: var(--gold); }
+  .nav-links { display: flex; gap: 36px; align-items: center; }
+  .btn-nav { background: var(--dark); color: var(--cream) !important; padding: 10px 24px; border-radius: 2px; transition: background 0.3s !important; }
+  .btn-nav:hover { background: var(--gold-dark) !important; }
+
+  .page-header { padding: 160px 60px 80px; text-align: center; position: relative; overflow: hidden; }
+  .page-header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(201,169,110,0.1) 0%, transparent 70%); }
+  .eyebrow { font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .eyebrow::before, .eyebrow::after { content: ''; flex: 0 0 40px; height: 1px; background: var(--gold); }
+  .page-header h1 { font-family: 'Fraunces', serif; font-size: clamp(40px, 5vw, 72px); font-weight: 300; color: var(--dark); margin-bottom: 16px; line-height: 1.05; }
+  .page-header h1 em { font-style: italic; color: var(--gold); }
+  .page-header p { font-size: 18px; color: var(--mid); max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+  /* COMMISSION CARDS */
+  .commission-section { max-width: 1100px; margin: 0 auto; padding: 80px 60px; }
+  .section-head { text-align: center; margin-bottom: 56px; }
+  .cat-title { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .section-head h2 { font-family: 'Fraunces', serif; font-size: 40px; font-weight: 300; color: var(--dark); margin-bottom: 16px; }
+  .section-head h2 em { font-style: italic; color: var(--gold); }
+  .section-head p { color: var(--mid); font-size: 16px; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+  .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .tier-card { padding: 40px 32px; border: 1px solid var(--border); border-radius: 4px; background: white; position: relative; transition: all 0.3s; }
+  .tier-card.featured { background: var(--dark); color: var(--cream); border-color: var(--gold); }
+  .tier-card:hover { transform: translateY(-6px); box-shadow: 0 30px 60px rgba(26,20,16,0.1); }
+  .tier-name { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .tier-rate { font-family: 'Fraunces', serif; font-size: 52px; font-weight: 300; color: var(--dark); margin-bottom: 6px; line-height: 1; }
+  .tier-card.featured .tier-rate { color: var(--gold-light); }
+  .tier-period { font-size: 13px; color: var(--mid); margin-bottom: 28px; }
+  .tier-card.featured .tier-period { color: rgba(250,246,239,0.5); }
+  .tier-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 24px; }
+  .tier-card.featured .tier-divider { border-color: rgba(201,169,110,0.2); }
+  .tier-features { list-style: none; }
+  .tier-features li { font-size: 14px; color: var(--mid); padding: 8px 0; display: flex; gap: 10px; line-height: 1.5; }
+  .tier-card.featured .tier-features li { color: rgba(250,246,239,0.7); }
+  .tier-features li::before { content: '✦'; color: var(--gold); font-size: 10px; margin-top: 4px; flex-shrink: 0; }
+  .featured-badge { position: absolute; top: -1px; right: 24px; background: var(--gold); color: var(--dark); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 6px 14px; border-radius: 0 0 4px 4px; font-weight: 500; }
+
+  /* HOW IT WORKS */
+  .how-section { background: white; padding: 100px 60px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .how-inner { max-width: 1100px; margin: 0 auto; }
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 40px; }
+  .step { text-align: center; }
+  .step-num { width: 64px; height: 64px; border: 1px solid var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-family: 'Fraunces', serif; font-size: 22px; color: var(--gold); background: var(--cream); }
+  .step h3 { font-family: 'Fraunces', serif; font-size: 18px; color: var(--dark); margin-bottom: 10px; font-weight: 400; }
+  .step p { font-size: 13px; color: var(--mid); line-height: 1.7; }
+
+  /* WHO IT'S FOR */
+  .for-section { padding: 100px 60px; max-width: 1100px; margin: 0 auto; }
+  .for-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 40px; }
+  .for-card { display: flex; gap: 20px; padding: 28px; border: 1px solid var(--border); border-radius: 4px; background: white; }
+  .for-icon { font-size: 32px; flex-shrink: 0; line-height: 1; }
+  .for-card h3 { font-family: 'Fraunces', serif; font-size: 20px; color: var(--dark); margin-bottom: 8px; font-weight: 400; }
+  .for-card p { font-size: 14px; color: var(--mid); line-height: 1.65; }
+
+  /* RULES */
+  .rules-section { background: var(--dark); color: var(--cream); padding: 100px 60px; }
+  .rules-inner { max-width: 880px; margin: 0 auto; }
+  .rules-inner .section-head h2 { color: var(--cream); }
+  .rules-inner .section-head p { color: rgba(250,246,239,0.6); }
+  .rules-list { list-style: none; }
+  .rules-list li { padding: 18px 0; border-bottom: 1px solid rgba(201,169,110,0.12); display: flex; gap: 16px; align-items: flex-start; }
+  .rules-list li:last-child { border-bottom: none; }
+  .rule-num { font-family: 'Fraunces', serif; color: var(--gold); font-size: 18px; min-width: 40px; flex-shrink: 0; }
+  .rule-text { font-size: 14px; color: rgba(250,246,239,0.7); line-height: 1.7; }
+  .rule-text strong { color: var(--gold-light); font-weight: 500; }
+
+  /* FAQ */
+  .faq-section { padding: 100px 60px; max-width: 880px; margin: 0 auto; }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-q { width: 100%; background: none; border: none; padding: 22px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left; gap: 20px; }
+  .faq-q-text { font-family: 'Fraunces', serif; font-size: 17px; color: var(--dark); }
+  .faq-icon { width: 26px; height: 26px; border: 1px solid var(--border-strong); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold); flex-shrink: 0; font-size: 14px; transition: all 0.3s; }
+  .faq-item.open .faq-icon { background: var(--gold); color: var(--dark); transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 0 22px; font-size: 14px; color: var(--mid); line-height: 1.8; }
+  .faq-item.open .faq-a { display: block; }
+
+  /* CTA */
+  .cta-band { background: var(--cream); padding: 90px 60px; text-align: center; border-top: 1px solid var(--border); }
+  .cta-band h2 { font-family: 'Fraunces', serif; font-size: 40px; font-weight: 300; color: var(--dark); margin-bottom: 12px; }
+  .cta-band h2 em { font-style: italic; color: var(--gold); }
+  .cta-band p { color: var(--mid); margin-bottom: 36px; font-size: 16px; }
+  .cta-band .small-note { font-size: 12px; color: var(--mid); margin-top: 18px; }
+  .btn-primary { background: var(--dark); color: var(--cream); padding: 16px 40px; border: none; border-radius: 2px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.3s; }
+  .btn-primary:hover { background: var(--gold-dark); transform: translateY(-2px); }
+
+  footer { background: var(--dark); display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; padding: 60px; }
+  .footer-logo { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 300; letter-spacing: 0.08em; color: var(--cream); margin-bottom: 16px; }
+  .footer-logo span { color: var(--gold); }
+  .footer-tagline { font-size: 13px; color: rgba(250,246,239,0.4); line-height: 1.7; max-width: 260px; }
+  .footer-col h4 { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .footer-col a { display: block; text-decoration: none; font-size: 13px; color: rgba(250,246,239,0.5); margin-bottom: 10px; transition: color 0.3s; }
+  .footer-col a:hover { color: var(--gold-light); }
+  .footer-bottom { background: var(--dark); padding: 24px 60px; border-top: 1px solid rgba(201,169,110,0.08); display: flex; justify-content: space-between; align-items: center; }
+  .footer-bottom p { font-size: 12px; color: rgba(250,246,239,0.25); }
+
+  @media (max-width: 1024px) {
+    nav { padding: 20px 30px; } .nav-links { gap: 20px; }
+    .page-header { padding: 140px 30px 60px; }
+    .commission-section, .how-section, .for-section, .rules-section, .faq-section, .cta-band { padding: 80px 30px; }
+    .tier-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+    .steps-grid { grid-template-columns: repeat(2, 1fr); }
+    .for-grid { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr 1fr; padding: 40px 30px; gap: 40px; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; } .nav-links { display: none; }
+    .page-header { padding: 120px 20px 50px; }
+    .commission-section, .how-section, .for-section, .rules-section, .faq-section, .cta-band { padding: 60px 20px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr; padding: 40px 20px; gap: 30px; }
+    .footer-bottom { padding: 20px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Pawtré <span>Studio</span></div>
+  <div class="nav-links">
+    <a href="index.html#styles">Styles</a>
+    <a href="samples.html">Samples</a>
+    <a href="index.html#studio">Studio</a>
+    <a href="index.html#pricing">Pricing</a>
+    <a href="index.html#studio" class="btn-nav">Create Portrait</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="eyebrow">Affiliate Program</div>
+  <h1>Earn With Pets You <em>Already Love</em></h1>
+  <p>Share Pawtré Studio with your audience and earn generous commissions on every portrait sold through your link. Built for content creators, pet professionals, and devoted pet parents.</p>
+</div>
+
+<!-- COMMISSION TIERS -->
+<div class="commission-section">
+  <div class="section-head">
+    <div class="cat-title">Commission Tiers</div>
+    <h2>Earn Up to <em>25%</em> Per Sale</h2>
+    <p>Your commission grows as you do. Every affiliate starts at our base tier and moves up automatically once monthly milestones are hit.</p>
+  </div>
+
+  <div class="tier-grid">
+    <div class="tier-card">
+      <div class="tier-name">Apprentice</div>
+      <div class="tier-rate">15<span style="font-size:24px;vertical-align:super">%</span></div>
+      <div class="tier-period">Starter tier · 0 – 9 sales / mo.</div>
+      <hr class="tier-divider">
+      <ul class="tier-features">
+        <li>15% commission on every order</li>
+        <li>60-day cookie window</li>
+        <li>Unique referral link &amp; promo code</li>
+        <li>Real-time dashboard</li>
+        <li>Monthly payouts via Stripe / PayPal</li>
+      </ul>
+    </div>
+
+    <div class="tier-card featured">
+      <div class="featured-badge">Most Popular</div>
+      <div class="tier-name">Master</div>
+      <div class="tier-rate">20<span style="font-size:24px;vertical-align:super">%</span></div>
+      <div class="tier-period">10 – 29 sales / mo.</div>
+      <hr class="tier-divider">
+      <ul class="tier-features">
+        <li>20% commission on every order</li>
+        <li>90-day cookie window</li>
+        <li>Exclusive promo codes (10% off)</li>
+        <li>Early access to new styles</li>
+        <li>Priority affiliate support</li>
+        <li>Co-branded creative assets</li>
+      </ul>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-name">Grand Master</div>
+      <div class="tier-rate">25<span style="font-size:24px;vertical-align:super">%</span></div>
+      <div class="tier-period">30+ sales / mo.</div>
+      <hr class="tier-divider">
+      <ul class="tier-features">
+        <li>25% commission on every order</li>
+        <li>120-day cookie window</li>
+        <li>Custom landing pages</li>
+        <li>Dedicated affiliate manager</li>
+        <li>Quarterly bonus pool</li>
+        <li>Free annual portrait credit</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section">
+  <div class="how-inner">
+    <div class="section-head">
+      <div class="cat-title">Getting Started</div>
+      <h2>How It <em>Works</em></h2>
+      <p>From application to your first commission in under a week.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">I</div>
+        <h3>Apply</h3>
+        <p>Tell us a little about you, your audience, and how you'd like to promote Pawtré Studio.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">II</div>
+        <h3>Get Approved</h3>
+        <p>We review applications within 3 business days. Approval includes your unique link and promo code.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">III</div>
+        <h3>Share &amp; Promote</h3>
+        <p>Use our ready-made creative assets — or your own — on socials, blogs, newsletters or YouTube.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">IV</div>
+        <h3>Get Paid</h3>
+        <p>Commissions tracked in real time. Payouts on the 1st of each month, minimum $50 balance.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHO IT'S FOR -->
+<div class="for-section">
+  <div class="section-head">
+    <div class="cat-title">Who It's For</div>
+    <h2>Built for People Who <em>Love Pets</em></h2>
+    <p>You don't need a million followers — you just need an audience that loves their animals.</p>
+  </div>
+
+  <div class="for-grid">
+    <div class="for-card">
+      <div class="for-icon">📱</div>
+      <div>
+        <h3>Pet Content Creators</h3>
+        <p>Instagram, TikTok, YouTube, blogs — anyone making pet content for an engaged audience. Our portraits perform extraordinarily well on visual platforms.</p>
+      </div>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">🐾</div>
+      <div>
+        <h3>Groomers, Vets &amp; Trainers</h3>
+        <p>Offer a beautiful add-on to your existing clientele. Recommend a portrait at the end of a grooming session or as a graduation gift.</p>
+      </div>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">🏠</div>
+      <div>
+        <h3>Rescues &amp; Shelters</h3>
+        <p>We offer enhanced rates (up to 30%) for verified rescues and shelters. A meaningful way to fundraise while celebrating adopted pets.</p>
+      </div>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">✏️</div>
+      <div>
+        <h3>Bloggers &amp; Publishers</h3>
+        <p>Pet review sites, gift guides, lifestyle blogs. We provide high-converting copy, imagery, and exclusive promo codes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RULES -->
+<div class="rules-section">
+  <div class="rules-inner">
+    <div class="section-head">
+      <div class="cat-title">Program Terms</div>
+      <h2>The <em>Fine Print</em></h2>
+      <p>Plain English. Fair for everyone.</p>
+    </div>
+
+    <ol class="rules-list" style="counter-reset: r;">
+      <li>
+        <span class="rule-num">I</span>
+        <span class="rule-text"><strong>Commissions are paid on completed, non-refunded orders only.</strong> If a customer refunds within our return window, the commission is reversed.</span>
+      </li>
+      <li>
+        <span class="rule-num">II</span>
+        <span class="rule-text"><strong>Cookie windows reset on every click.</strong> Whichever affiliate's link was clicked most recently before purchase earns the commission.</span>
+      </li>
+      <li>
+        <span class="rule-num">III</span>
+        <span class="rule-text"><strong>Self-referrals are not permitted.</strong> Commission on your own orders or those of immediate family members will be voided.</span>
+      </li>
+      <li>
+        <span class="rule-num">IV</span>
+        <span class="rule-text"><strong>No paid search on our brand terms.</strong> Bidding on "Pawtré Studio" or close variants in Google Ads, Bing, etc. is prohibited.</span>
+      </li>
+      <li>
+        <span class="rule-num">V</span>
+        <span class="rule-text"><strong>Disclose your affiliate relationship</strong> in line with FTC, ASA, and ACCC guidelines wherever you promote.</span>
+      </li>
+      <li>
+        <span class="rule-num">VI</span>
+        <span class="rule-text"><strong>No spam, no misleading claims, no incentive-traffic networks.</strong> We reserve the right to terminate affiliates who damage the brand.</span>
+      </li>
+      <li>
+        <span class="rule-num">VII</span>
+        <span class="rule-text"><strong>Payouts are minimum $50 USD equivalent</strong>, processed monthly via Stripe Connect or PayPal. Below threshold, balance rolls over.</span>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <div class="section-head">
+    <div class="cat-title">Common Questions</div>
+    <h2>Affiliate <em>FAQ</em></h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">Do I need an existing audience to apply?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Not necessarily — we accept applications from creators at all stages. We look for engaged, pet-loving audiences over follower count. If your community trusts you, you're a great fit.</div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">When do I get paid?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Payouts run on the 1st of each month for the previous month's earnings, provided you've cleared the $50 minimum threshold. Funds typically land in your account within 3 business days.</div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">How are sales tracked?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Each affiliate gets a unique tracking link and a personal promo code. Sales are tracked via first-party cookies (60–120 days depending on tier) and at checkout when a customer enters your code.</div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">What creative assets are provided?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Approved affiliates get access to a media kit: high-res before/after images, sample portraits in all five styles, banner ads, social-ready Reels templates, email swipe copy, and brand guidelines.</div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">Can I review the product before promoting?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Yes — once approved, you'll receive a complimentary digital portrait of your own pet to experience the product first-hand. Higher tiers also receive an annual printed portrait credit.</div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggle(this)">
+      <span class="faq-q-text">Is there an exclusive offer I can give my audience?</span>
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-a">Yes. Master and Grand Master affiliates receive an exclusive 10% off promo code that converts better than the public site, with no cannibalisation of your commission.</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-band">
+  <h2>Ready to <em>Join Us?</em></h2>
+  <p>Drop us a note and we'll get back within 3 business days.</p>
+  <a href="mailto:hello@pawtrestudio.com?subject=Affiliate%20Program%20Application" class="btn-primary">✦ Apply Now</a>
+  <div class="small-note">Or email <strong>hello@pawtrestudio.com</strong> with the subject line "Affiliate Application"</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">Pawtré <span>Studio</span></div>
+    <p class="footer-tagline">Transforming beloved pets into timeless works of art through the magic of AI and the craft of fine printing since 2024.</p>
+  </div>
+  <div class="footer-col">
+    <h4>Studio</h4>
+    <a href="index.html#styles">Artistic Styles</a>
+    <a href="samples.html">Sample Gallery</a>
+    <a href="index.html#studio">Create Portrait</a>
+    <a href="index.html#pricing">Pricing</a>
+  </div>
+  <div class="footer-col">
+    <h4>Support</h4>
+    <a href="faq.html">FAQ</a>
+    <a href="shipping.html">Shipping Info</a>
+    <a href="returns.html">Returns</a>
+    <a href="contact.html">Contact Us</a>
+  </div>
+  <div class="footer-col">
+    <h4>Company</h4>
+    <a href="about.html">About</a>
+    <a href="affiliates.html">Affiliates</a>
+    <a href="privacy.html">Privacy Policy</a>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <p>© 2025 Pawtré Studio. All rights reserved.</p>
+  <p>Secured by Stripe · SSL Encrypted · Fulfilled by Prodigi's global print network</p>
+</div>
+
+<script>
+  function toggle(btn) {
+    btn.closest('.faq-item').classList.toggle('open');
+  }
+</script>
+</body>
+</html>

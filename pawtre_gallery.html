@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pawtré Studio — AI Portrait Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #E8D5A3;
+    --gold-dark: #9B7A42;
+    --cream: #FAF6EF;
+    --dark: #1A1410;
+    --dark-2: #2C2218;
+    --mid: #6B5744;
+    --border: rgba(201,169,110,0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* Noise */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.5;
+  }
+
+  /* NAV */
+  nav {
+    padding: 28px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(201,169,110,0.15);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(26,20,16,0.9);
+    backdrop-filter: blur(20px);
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 26px; font-weight: 300;
+    letter-spacing: 0.05em; color: var(--cream);
+  }
+  .logo span { color: var(--gold); }
+  .nav-back {
+    text-decoration: none; color: rgba(250,246,239,0.5);
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .nav-back:hover { color: var(--gold); }
+
+  /* HERO */
+  .hero {
+    padding: 80px 60px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,169,110,0.08) 0%, transparent 70%);
+  }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .eyebrow::before, .eyebrow::after {
+    content: ''; width: 48px; height: 1px; background: var(--gold); opacity: 0.5;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(40px, 5vw, 72px);
+    font-weight: 300; line-height: 1.05;
+    color: var(--cream); margin-bottom: 20px;
+  }
+  h1 em { font-style: italic; color: var(--gold); }
+  .hero-sub {
+    font-size: 16px; line-height: 1.7;
+    color: rgba(250,246,239,0.5);
+    max-width: 560px; margin: 0 auto 60px;
+  }
+
+  /* STYLE TABS */
+  .style-tabs {
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap; margin-bottom: 64px; position: relative; z-index: 1;
+  }
+  .tab-btn {
+    background: rgba(201,169,110,0.06);
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 40px;
+    padding: 10px 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; letter-spacing: 0.08em;
+    color: rgba(250,246,239,0.5);
+    cursor: pointer; transition: all 0.3s;
+  }
+  .tab-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+  .tab-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--dark);
+    font-weight: 500;
+  }
+
+  /* GALLERY GRID */
+  .gallery-section {
+    padding: 0 40px 100px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .style-heading {
+    text-align: center;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+  }
+  .style-heading.visible { opacity: 1; transform: translateY(0); }
+  .style-title {
+    font-family: 'Fraunces', serif;
+    font-size: 36px; font-weight: 300;
+    color: var(--cream); margin-bottom: 10px;
+  }
+  .style-desc-text {
+    font-size: 14px; color: rgba(250,246,239,0.4);
+    letter-spacing: 0.05em;
+  }
+  .style-divider {
+    width: 60px; height: 1px; background: var(--gold);
+    margin: 16px auto;
+  }
+
+  /* Portrait Grid */
+  .portraits-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 80px;
+  }
+
+  .portrait-wrap {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .portrait-wrap.visible { opacity: 1; transform: translateY(0); }
+  .portrait-wrap:nth-child(2) { transition-delay: 0.1s; }
+  .portrait-wrap:nth-child(3) { transition-delay: 0.2s; }
+  .portrait-wrap:nth-child(4) { transition-delay: 0.3s; }
+
+  /* Frame SVG wrapper */
+  .frame-outer {
+    position: relative;
+    cursor: pointer;
+  }
+  .frame-outer:hover .portrait-canvas { transform: scale(1.02); }
+  .frame-outer:hover .portrait-frame-overlay { opacity: 0.7; }
+
+  .canvas-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+
+  .portrait-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.5s ease;
+  }
+
+  /* Frame overlay SVG */
+  .frame-svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Style-specific frame colors */
+  .frame-renaissance .frame-svg path,
+  .frame-renaissance .frame-svg rect { stroke: #C9A96E; }
+  .frame-oil .frame-svg path,
+  .frame-oil .frame-svg rect { stroke: #7A6A50; }
+  .frame-watercolour .frame-svg path,
+  .frame-watercolour .frame-svg rect { stroke: #A8C4D4; }
+  .frame-cosmic .frame-svg path,
+  .frame-cosmic .frame-svg rect { stroke: #8B6BB5; }
+
+  /* Pet label */
+  .portrait-label {
+    padding: 16px 4px 4px;
+  }
+  .pet-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 300;
+    color: var(--cream); margin-bottom: 4px;
+  }
+  .pet-style-tag {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.7;
+  }
+  .pet-breed {
+    font-size: 12px; color: rgba(250,246,239,0.3);
+    margin-top: 2px;
+  }
+
+  /* Order CTA on each card */
+  .card-cta {
+    margin-top: 12px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(201,169,110,0.25);
+    border-radius: 2px;
+    padding: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(250,246,239,0.4);
+    cursor: pointer; transition: all 0.3s;
+  }
+  .card-cta:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201,169,110,0.05);
+  }
+
+  /* Comparison strip */
+  .compare-strip {
+    background: rgba(201,169,110,0.04);
+    border: 1px solid rgba(201,169,110,0.12);
+    border-radius: 6px;
+    padding: 40px;
+    margin: 60px 0;
+    text-align: center;
+  }
+  .compare-strip h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px; font-weight: 300;
+    color: var(--cream); margin-bottom: 8px;
+  }
+  .compare-strip p { font-size: 14px; color: rgba(250,246,239,0.4); margin-bottom: 24px; }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 200px repeat(4, 1fr);
+    gap: 12px; align-items: center;
+  }
+  .compare-label {
+    font-size: 12px; color: rgba(250,246,239,0.4); text-align: left;
+  }
+  .compare-style-label {
+    font-family: 'Fraunces', serif;
+    font-size: 13px; color: var(--gold); text-align: center;
+  }
+  .compare-thumb {
+    border-radius: 3px; overflow: hidden;
+    aspect-ratio: 1;
+  }
+  .compare-thumb canvas { width: 100%; height: 100%; display: block; }
+
+  /* Bottom CTA */
+  .bottom-cta {
+    text-align: center;
+    padding: 80px 40px;
+    border-top: 1px solid rgba(201,169,110,0.1);
+  }
+  .bottom-cta h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 48px; font-weight: 300;
+    color: var(--cream); margin-bottom: 16px;
+  }
+  .bottom-cta h2 em { font-style: italic; color: var(--gold); }
+  .bottom-cta p { font-size: 16px; color: rgba(250,246,239,0.5); margin-bottom: 36px; }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--dark);
+    padding: 18px 52px;
+    border: none; border-radius: 2px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.3s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-gold:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+  /* Loading overlay */
+  #loadingOverlay {
+    position: fixed; inset: 0;
+    background: var(--dark);
+    z-index: 9000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px;
+    transition: opacity 0.8s ease;
+  }
+  #loadingOverlay.fade-out { opacity: 0; pointer-events: none; }
+  .loading-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 36px; font-weight: 300; color: var(--gold);
+  }
+  .loading-bar-wrap {
+    width: 240px; height: 1px;
+    background: rgba(201,169,110,0.15);
+    border-radius: 1px; overflow: hidden;
+  }
+  .loading-bar {
+    height: 100%; background: var(--gold);
+    width: 0%; transition: width 0.1s linear;
+  }
+  .loading-text {
+    font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: rgba(201,169,110,0.5);
+  }
+
+  @media (max-width: 1024px) {
+    .portraits-row { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 20px 30px; }
+    .hero { padding: 60px 30px 40px; }
+    .gallery-section { padding: 0 24px 80px; }
+    .compare-grid { grid-template-columns: 120px repeat(4, 1fr); gap: 8px; }
+  }
+  @media (max-width: 640px) {
+    .portraits-row { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .gallery-section { padding: 0 16px 60px; }
+    .style-tabs { gap: 6px; }
+    .tab-btn { padding: 8px 16px; font-size: 12px; }
+    .compare-grid { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loadingOverlay">
+  <div class="loading-logo">Pawtré Studio</div>
+  <div style="font-size:32px">🎨</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+  <div class="loading-text" id="loadingText">Preparing your portraits…</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Pawtré <span>Studio</span></div>
+  <a href="pawtraits.html" class="nav-back">← Back to Studio</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="eyebrow">AI Portrait Gallery</div>
+  <h1>Four Pets.<br><em>Four Masterpieces.</em></h1>
+  <p class="hero-sub">Watch as our AI transforms a simple photo into timeless fine art. Each style applied to four real pets — a Golden Retriever puppy, a Corgi, a Tabby cat, and a Rabbit.</p>
+
+  <div class="style-tabs">
+    <button class="tab-btn active" onclick="scrollToStyle('renaissance')">👑 Renaissance Royal</button>
+    <button class="tab-btn" onclick="scrollToStyle('oil')">🎨 Regal Oil</button>
+    <button class="tab-btn" onclick="scrollToStyle('watercolour')">🌊 Watercolour Whimsy</button>
+    <button class="tab-btn" onclick="scrollToStyle('cosmic')">🌌 Cosmic Royalty</button>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div class="gallery-section">
+
+  <!-- RENAISSANCE ROYAL -->
+  <div id="section-renaissance">
+    <div class="style-heading" id="head-renaissance">
+      <div class="style-title">👑 Renaissance Royal</div>
+      <div class="style-divider"></div>
+      <div class="style-desc-text">15th century grandeur · Rich velvet · Golden candlelight · Oil on oak panel</div>
+    </div>
+    <div class="portraits-row" id="row-renaissance">
+      <div class="portrait-wrap frame-renaissance">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-ren-puppy" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="8" width="384" height="484" stroke="#C9A96E" stroke-width="2" rx="1"/>
+              <rect x="18" y="18" width="364" height="464" stroke="#C9A96E" stroke-width="0.5" rx="1"/>
+              <rect x="24" y="24" width="352" height="452" stroke="#9B7A42" stroke-width="0.5" rx="1"/>
+              <!-- Corner ornaments -->
+              <path d="M8 8 L30 8 L30 10 L10 10 L10 30 L8 30 Z" fill="#C9A96E"/>
+              <path d="M392 8 L370 8 L370 10 L390 10 L390 30 L392 30 Z" fill="#C9A96E"/>
+              <path d="M8 492 L30 492 L30 490 L10 490 L10 470 L8 470 Z" fill="#C9A96E"/>
+              <path d="M392 492 L370 492 L370 490 L390 490 L390 470 L392 470 Z" fill="#C9A96E"/>
+              <!-- Top centre flourish -->
+              <path d="M190 8 Q200 4 210 8" stroke="#C9A96E" stroke-width="1.5" fill="none"/>
+              <circle cx="200" cy="6" r="2" fill="#C9A96E"/>
+              <path d="M190 492 Q200 496 210 492" stroke="#C9A96E" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Sir Goldie, Duke of Biscuit</div>
+            <div class="pet-breed">Golden Retriever Puppy</div>
+            <div class="pet-style-tag">Renaissance Royal</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-renaissance">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-ren-corgi" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="8" width="384" height="484" stroke="#C9A96E" stroke-width="2" rx="1"/>
+              <rect x="18" y="18" width="364" height="464" stroke="#C9A96E" stroke-width="0.5" rx="1"/>
+              <rect x="24" y="24" width="352" height="452" stroke="#9B7A42" stroke-width="0.5" rx="1"/>
+              <path d="M8 8 L30 8 L30 10 L10 10 L10 30 L8 30 Z" fill="#C9A96E"/>
+              <path d="M392 8 L370 8 L370 10 L390 10 L390 30 L392 30 Z" fill="#C9A96E"/>
+              <path d="M8 492 L30 492 L30 490 L10 490 L10 470 L8 470 Z" fill="#C9A96E"/>
+              <path d="M392 492 L370 492 L370 490 L390 490 L390 470 L392 470 Z" fill="#C9A96E"/>
+              <path d="M190 8 Q200 4 210 8" stroke="#C9A96E" stroke-width="1.5" fill="none"/>
+              <circle cx="200" cy="6" r="2" fill="#C9A96E"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Lady Pemberton of the Grass</div>
+            <div class="pet-breed">Pembroke Welsh Corgi</div>
+            <div class="pet-style-tag">Renaissance Royal</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-renaissance">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-ren-cat" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="8" width="384" height="484" stroke="#C9A96E" stroke-width="2" rx="1"/>
+              <rect x="18" y="18" width="364" height="464" stroke="#C9A96E" stroke-width="0.5" rx="1"/>
+              <rect x="24" y="24" width="352" height="452" stroke="#9B7A42" stroke-width="0.5" rx="1"/>
+              <path d="M8 8 L30 8 L30 10 L10 10 L10 30 L8 30 Z" fill="#C9A96E"/>
+              <path d="M392 8 L370 8 L370 10 L390 10 L390 30 L392 30 Z" fill="#C9A96E"/>
+              <path d="M8 492 L30 492 L30 490 L10 490 L10 470 L8 470 Z" fill="#C9A96E"/>
+              <path d="M392 492 L370 492 L370 490 L390 490 L390 470 L392 470 Z" fill="#C9A96E"/>
+              <path d="M190 8 Q200 4 210 8" stroke="#C9A96E" stroke-width="1.5" fill="none"/>
+              <circle cx="200" cy="6" r="2" fill="#C9A96E"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Countess Tabitha the Aloof</div>
+            <div class="pet-breed">Tabby Cat</div>
+            <div class="pet-style-tag">Renaissance Royal</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-renaissance">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-ren-rabbit" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="8" width="384" height="484" stroke="#C9A96E" stroke-width="2" rx="1"/>
+              <rect x="18" y="18" width="364" height="464" stroke="#C9A96E" stroke-width="0.5" rx="1"/>
+              <rect x="24" y="24" width="352" height="452" stroke="#9B7A42" stroke-width="0.5" rx="1"/>
+              <path d="M8 8 L30 8 L30 10 L10 10 L10 30 L8 30 Z" fill="#C9A96E"/>
+              <path d="M392 8 L370 8 L370 10 L390 10 L390 30 L392 30 Z" fill="#C9A96E"/>
+              <path d="M8 492 L30 492 L30 490 L10 490 L10 470 L8 470 Z" fill="#C9A96E"/>
+              <path d="M392 492 L370 492 L370 490 L390 490 L390 470 L392 470 Z" fill="#C9A96E"/>
+              <path d="M190 8 Q200 4 210 8" stroke="#C9A96E" stroke-width="1.5" fill="none"/>
+              <circle cx="200" cy="6" r="2" fill="#C9A96E"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Baron von Floppington III</div>
+            <div class="pet-breed">Dutch Rabbit</div>
+            <div class="pet-style-tag">Renaissance Royal</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGAL OIL -->
+  <div id="section-oil">
+    <div class="style-heading" id="head-oil">
+      <div class="style-title">🎨 Regal Oil</div>
+      <div class="style-divider"></div>
+      <div class="style-desc-text">18th–19th century · Chiaroscuro · Dramatic shadow · Museum-worthy gravitas</div>
+    </div>
+    <div class="portraits-row" id="row-oil">
+      <div class="portrait-wrap frame-oil">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-oil-puppy" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="6" y="6" width="388" height="488" stroke="#5A4A30" stroke-width="3" rx="1"/>
+              <rect x="14" y="14" width="372" height="472" stroke="#7A6A50" stroke-width="1" rx="1"/>
+              <rect x="20" y="20" width="360" height="460" stroke="#4A3A20" stroke-width="1" rx="1"/>
+              <path d="M6 6 L35 6 L35 9 L9 9 L9 35 L6 35 Z" fill="#7A6A50"/>
+              <path d="M394 6 L365 6 L365 9 L391 9 L391 35 L394 35 Z" fill="#7A6A50"/>
+              <path d="M6 494 L35 494 L35 491 L9 491 L9 465 L6 465 Z" fill="#7A6A50"/>
+              <path d="M394 494 L365 494 L365 491 L391 491 L391 465 L394 465 Z" fill="#7A6A50"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Portrait of a Golden Youth</div>
+            <div class="pet-breed">Golden Retriever Puppy</div>
+            <div class="pet-style-tag">Regal Oil</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-oil">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-oil-corgi" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="6" y="6" width="388" height="488" stroke="#5A4A30" stroke-width="3" rx="1"/>
+              <rect x="14" y="14" width="372" height="472" stroke="#7A6A50" stroke-width="1" rx="1"/>
+              <rect x="20" y="20" width="360" height="460" stroke="#4A3A20" stroke-width="1" rx="1"/>
+              <path d="M6 6 L35 6 L35 9 L9 9 L9 35 L6 35 Z" fill="#7A6A50"/>
+              <path d="M394 6 L365 6 L365 9 L391 9 L391 35 L394 35 Z" fill="#7A6A50"/>
+              <path d="M6 494 L35 494 L35 491 L9 491 L9 465 L6 465 Z" fill="#7A6A50"/>
+              <path d="M394 494 L365 494 L365 491 L391 491 L391 465 L394 465 Z" fill="#7A6A50"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">The Smiling Aristocrat</div>
+            <div class="pet-breed">Pembroke Welsh Corgi</div>
+            <div class="pet-style-tag">Regal Oil</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-oil">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-oil-cat" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="6" y="6" width="388" height="488" stroke="#5A4A30" stroke-width="3" rx="1"/>
+              <rect x="14" y="14" width="372" height="472" stroke="#7A6A50" stroke-width="1" rx="1"/>
+              <rect x="20" y="20" width="360" height="460" stroke="#4A3A20" stroke-width="1" rx="1"/>
+              <path d="M6 6 L35 6 L35 9 L9 9 L9 35 L6 35 Z" fill="#7A6A50"/>
+              <path d="M394 6 L365 6 L365 9 L391 9 L391 35 L394 35 Z" fill="#7A6A50"/>
+              <path d="M6 494 L35 494 L35 491 L9 491 L9 465 L6 465 Z" fill="#7A6A50"/>
+              <path d="M394 494 L365 494 L365 491 L391 491 L391 465 L394 465 Z" fill="#7A6A50"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Study of Feline Gravitas</div>
+            <div class="pet-breed">Tabby Cat</div>
+            <div class="pet-style-tag">Regal Oil</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-oil">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-oil-rabbit" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="6" y="6" width="388" height="488" stroke="#5A4A30" stroke-width="3" rx="1"/>
+              <rect x="14" y="14" width="372" height="472" stroke="#7A6A50" stroke-width="1" rx="1"/>
+              <rect x="20" y="20" width="360" height="460" stroke="#4A3A20" stroke-width="1" rx="1"/>
+              <path d="M6 6 L35 6 L35 9 L9 9 L9 35 L6 35 Z" fill="#7A6A50"/>
+              <path d="M394 6 L365 6 L365 9 L391 9 L391 35 L394 35 Z" fill="#7A6A50"/>
+              <path d="M6 494 L35 494 L35 491 L9 491 L9 465 L6 465 Z" fill="#7A6A50"/>
+              <path d="M394 494 L365 494 L365 491 L391 491 L391 465 L394 465 Z" fill="#7A6A50"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Lagomorph in Repose</div>
+            <div class="pet-breed">Dutch Rabbit</div>
+            <div class="pet-style-tag">Regal Oil</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WATERCOLOUR WHIMSY -->
+  <div id="section-watercolour">
+    <div class="style-heading" id="head-watercolour">
+      <div class="style-title">🌊 Watercolour Whimsy</div>
+      <div class="style-divider"></div>
+      <div class="style-desc-text">Soft washes · Dreamy edges · Pastel depth · Enchanting and ethereal</div>
+    </div>
+    <div class="portraits-row" id="row-watercolour">
+      <div class="portrait-wrap frame-watercolour">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-wc-puppy" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#A8C4D4" stroke-width="1.5" rx="3"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#C4DDE8" stroke-width="0.5" rx="2"/>
+              <path d="M8 8 C18 6 30 6 40 8" stroke="#A8C4D4" stroke-width="1.5" fill="none"/>
+              <path d="M360 8 C370 6 382 6 392 8" stroke="#A8C4D4" stroke-width="1.5" fill="none"/>
+              <path d="M8 492 C18 494 30 494 40 492" stroke="#A8C4D4" stroke-width="1.5" fill="none"/>
+              <path d="M360 492 C370 494 382 494 392 492" stroke="#A8C4D4" stroke-width="1.5" fill="none"/>
+              <circle cx="200" cy="8" r="3" fill="#A8C4D4" opacity="0.6"/>
+              <circle cx="200" cy="492" r="3" fill="#A8C4D4" opacity="0.6"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Sunshine in a Bow Tie</div>
+            <div class="pet-breed">Golden Retriever Puppy</div>
+            <div class="pet-style-tag">Watercolour Whimsy</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-watercolour">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-wc-corgi" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#A8C4D4" stroke-width="1.5" rx="3"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#C4DDE8" stroke-width="0.5" rx="2"/>
+              <circle cx="200" cy="8" r="3" fill="#A8C4D4" opacity="0.6"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Joy Personified</div>
+            <div class="pet-breed">Pembroke Welsh Corgi</div>
+            <div class="pet-style-tag">Watercolour Whimsy</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-watercolour">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-wc-cat" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#A8C4D4" stroke-width="1.5" rx="3"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#C4DDE8" stroke-width="0.5" rx="2"/>
+              <circle cx="200" cy="8" r="3" fill="#A8C4D4" opacity="0.6"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Whisper of a Summer Dream</div>
+            <div class="pet-breed">Tabby Cat</div>
+            <div class="pet-style-tag">Watercolour Whimsy</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-watercolour">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-wc-rabbit" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#A8C4D4" stroke-width="1.5" rx="3"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#C4DDE8" stroke-width="0.5" rx="2"/>
+              <circle cx="200" cy="8" r="3" fill="#A8C4D4" opacity="0.6"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">The Little Duchess</div>
+            <div class="pet-breed">Dutch Rabbit</div>
+            <div class="pet-style-tag">Watercolour Whimsy</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COSMIC ROYALTY -->
+  <div id="section-cosmic">
+    <div class="style-heading" id="head-cosmic">
+      <div class="style-title">🌌 Cosmic Royalty</div>
+      <div class="style-divider"></div>
+      <div class="style-desc-text">Galaxy nebulas · Celestial robes · Stardust · Inter-dimensional deity</div>
+    </div>
+    <div class="portraits-row" id="row-cosmic">
+      <div class="portrait-wrap frame-cosmic">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-cos-puppy" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#8B6BB5" stroke-width="1.5" rx="1"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#6B4B95" stroke-width="0.5" rx="1"/>
+              <circle cx="8" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="8" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="200" cy="8" r="2" fill="#E8C0FF" opacity="0.6"/>
+              <circle cx="200" cy="492" r="2" fill="#E8C0FF" opacity="0.6"/>
+              <!-- Stars along border -->
+              <circle cx="100" cy="8" r="1" fill="#E8D0FF" opacity="0.5"/>
+              <circle cx="300" cy="8" r="1" fill="#E8D0FF" opacity="0.5"/>
+              <circle cx="8" cy="180" r="1" fill="#E8D0FF" opacity="0.5"/>
+              <circle cx="8" cy="320" r="1" fill="#E8D0FF" opacity="0.5"/>
+              <circle cx="392" cy="180" r="1" fill="#E8D0FF" opacity="0.5"/>
+              <circle cx="392" cy="320" r="1" fill="#E8D0FF" opacity="0.5"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Nova of the Golden Nebula</div>
+            <div class="pet-breed">Golden Retriever Puppy</div>
+            <div class="pet-style-tag">Cosmic Royalty</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-cosmic">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-cos-corgi" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#8B6BB5" stroke-width="1.5" rx="1"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#6B4B95" stroke-width="0.5" rx="1"/>
+              <circle cx="8" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="8" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Keeper of the Star Gate</div>
+            <div class="pet-breed">Pembroke Welsh Corgi</div>
+            <div class="pet-style-tag">Cosmic Royalty</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-cosmic">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-cos-cat" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#8B6BB5" stroke-width="1.5" rx="1"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#6B4B95" stroke-width="0.5" rx="1"/>
+              <circle cx="8" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="8" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">The Void Whisperer</div>
+            <div class="pet-breed">Tabby Cat</div>
+            <div class="pet-style-tag">Cosmic Royalty</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+
+      <div class="portrait-wrap frame-cosmic">
+        <div class="frame-outer">
+          <div class="canvas-wrapper">
+            <canvas class="portrait-canvas" id="c-cos-rabbit" width="400" height="500"></canvas>
+            <svg class="frame-svg" viewBox="0 0 400 500" fill="none">
+              <rect x="8" y="8" width="384" height="484" stroke="#8B6BB5" stroke-width="1.5" rx="1"/>
+              <rect x="16" y="16" width="368" height="468" stroke="#6B4B95" stroke-width="0.5" rx="1"/>
+              <circle cx="8" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="8" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="8" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+              <circle cx="392" cy="492" r="3" fill="#C9A0E8" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="portrait-label">
+            <div class="pet-name">Lunar Sovereign of Andromeda</div>
+            <div class="pet-breed">Dutch Rabbit</div>
+            <div class="pet-style-tag">Cosmic Royalty</div>
+          </div>
+          <button class="card-cta">✦ Order This Style</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM CTA -->
+<div class="bottom-cta">
+  <h2>Ready for Your Pet's<br><em>Moment of Glory?</em></h2>
+  <p>Upload a photo and see your companion transformed in under 90 seconds.</p>
+  <a href="pawtraits.html#studio" class="btn-gold">✦ Create Your Portrait</a>
+</div>
+
+<script>
+// ─── Image sources (relative paths) ───
+const IMAGES = {
+  puppy:  'pet_puppy.png',
+  corgi:  'pet_corgi.png',
+  cat:    'pet_cat.png',
+  rabbit: 'pet_rabbit.png'
+};
+
+// ─── Style filter recipes ───
+const STYLES = {
+  renaissance: {
+    // Warm, sepia, high contrast, dark vignette, golden cast
+    apply: (ctx, w, h, img) => {
+      ctx.drawImage(img, 0, 0, w, h);
+      const d = ctx.getImageData(0, 0, w, h);
+      const px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        let r = px[i], g = px[i+1], b = px[i+2];
+        // Sepia + warm tone
+        let nr = Math.min(255, r * 0.85 + g * 0.25 + b * 0.05 + 30);
+        let ng = Math.min(255, r * 0.22 + g * 0.72 + b * 0.08 + 10);
+        let nb = Math.min(255, r * 0.08 + g * 0.10 + b * 0.60 - 10);
+        // Boost contrast
+        nr = Math.min(255, Math.max(0, (nr - 128) * 1.3 + 128));
+        ng = Math.min(255, Math.max(0, (ng - 128) * 1.2 + 128));
+        nb = Math.min(255, Math.max(0, (nb - 128) * 1.0 + 128));
+        px[i] = nr; px[i+1] = ng; px[i+2] = nb;
+      }
+      ctx.putImageData(d, 0, 0);
+      // Dark vignette
+      const vg = ctx.createRadialGradient(w/2, h/2, h*0.25, w/2, h/2, h*0.85);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, 'rgba(15,5,0,0.75)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
+      // Warm glow top
+      const tg = ctx.createRadialGradient(w*0.6, h*0.15, 0, w*0.6, h*0.15, h*0.5);
+      tg.addColorStop(0, 'rgba(201,169,110,0.18)');
+      tg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = tg;
+      ctx.fillRect(0, 0, w, h);
+      // Colour overlay for richness
+      ctx.fillStyle = 'rgba(80,40,0,0.12)';
+      ctx.fillRect(0, 0, w, h);
+      // Faint brush texture lines
+      ctx.strokeStyle = 'rgba(255,220,150,0.03)';
+      ctx.lineWidth = 2;
+      for (let y = 0; y < h; y += 4) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y + Math.random()*3 - 1.5); ctx.stroke();
+      }
+      // Crown emoji
+      ctx.font = '52px serif';
+      ctx.fillText('👑', w/2 - 28, 65);
+    },
+    bg: '#1A0A00'
+  },
+  oil: {
+    apply: (ctx, w, h, img) => {
+      ctx.drawImage(img, 0, 0, w, h);
+      const d = ctx.getImageData(0, 0, w, h);
+      const px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        let r = px[i], g = px[i+1], b = px[i+2];
+        // Desaturate partially
+        let gray = r * 0.299 + g * 0.587 + b * 0.114;
+        r = r * 0.5 + gray * 0.5;
+        g = g * 0.5 + gray * 0.5;
+        b = b * 0.5 + gray * 0.5;
+        // Very high contrast + darken shadows
+        r = Math.min(255, Math.max(0, (r - 128) * 1.5 + 128 - 15));
+        g = Math.min(255, Math.max(0, (g - 128) * 1.4 + 128 - 15));
+        b = Math.min(255, Math.max(0, (b - 128) * 1.3 + 128 - 20));
+        // Slight warm cast in highlights
+        if (r > 150) r = Math.min(255, r + 12);
+        if (g > 130) g = Math.min(255, g + 6);
+        px[i] = r; px[i+1] = g; px[i+2] = b;
+      }
+      ctx.putImageData(d, 0, 0);
+      // Very dark vignette — dramatic chiaroscuro
+      const vg = ctx.createRadialGradient(w/2, h*0.4, h*0.1, w/2, h*0.6, h*0.9);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(0.5, 'rgba(0,0,0,0.15)');
+      vg.addColorStop(1, 'rgba(0,0,0,0.88)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
+      // Cool blue-dark overlay
+      ctx.fillStyle = 'rgba(10,20,40,0.2)';
+      ctx.fillRect(0, 0, w, h);
+      // Painterly crack texture
+      ctx.strokeStyle = 'rgba(255,255,200,0.04)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random()*w, Math.random()*h);
+        ctx.lineTo(Math.random()*w, Math.random()*h);
+        ctx.stroke();
+      }
+      // Gold nameplate at bottom
+      const grd = ctx.createLinearGradient(w*0.15, h-60, w*0.85, h-30);
+      grd.addColorStop(0, 'rgba(100,70,20,0.8)');
+      grd.addColorStop(0.5, 'rgba(201,169,110,0.85)');
+      grd.addColorStop(1, 'rgba(100,70,20,0.8)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(w*0.15, h-68, w*0.7, 36);
+      ctx.fillStyle = 'rgba(15,10,5,0.9)';
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('OIL ON CANVAS · XVIII CENTURY', w/2, h-44);
+      ctx.textAlign = 'left';
+    },
+    bg: '#050810'
+  },
+  watercolour: {
+    apply: (ctx, w, h, img) => {
+      // Draw image with lightened, pastel treatment
+      ctx.drawImage(img, 0, 0, w, h);
+      const d = ctx.getImageData(0, 0, w, h);
+      const px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        let r = px[i], g = px[i+1], b = px[i+2];
+        // Pastelise: push toward white
+        r = Math.min(255, r + (255 - r) * 0.35);
+        g = Math.min(255, g + (255 - g) * 0.32);
+        b = Math.min(255, b + (255 - b) * 0.28);
+        // Slight blue-pink tint
+        r = Math.min(255, r * 0.98 + 5);
+        g = Math.min(255, g * 0.96 + 4);
+        b = Math.min(255, b * 1.02 + 8);
+        // Soften contrast
+        r = Math.min(255, Math.max(0, (r - 128) * 0.85 + 128));
+        g = Math.min(255, Math.max(0, (g - 128) * 0.82 + 128));
+        b = Math.min(255, Math.max(0, (b - 128) * 0.80 + 128));
+        px[i] = r; px[i+1] = g; px[i+2] = b;
+      }
+      ctx.putImageData(d, 0, 0);
+      // Bright soft fade at edges (watercolour bleed)
+      const vg = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.75);
+      vg.addColorStop(0, 'rgba(255,255,255,0)');
+      vg.addColorStop(1, 'rgba(240,235,255,0.6)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
+      // Soft colour washes
+      const wg = ctx.createLinearGradient(0, 0, w, h);
+      wg.addColorStop(0, 'rgba(200,220,255,0.15)');
+      wg.addColorStop(0.5, 'rgba(255,200,220,0.08)');
+      wg.addColorStop(1, 'rgba(200,255,220,0.12)');
+      ctx.fillStyle = wg;
+      ctx.fillRect(0, 0, w, h);
+      // Paper texture feel — horizontal wet lines
+      ctx.strokeStyle = 'rgba(180,200,255,0.06)';
+      ctx.lineWidth = 3;
+      for (let y = 0; y < h; y += 8) {
+        ctx.beginPath();
+        let x = 0;
+        ctx.moveTo(x, y);
+        while (x < w) { x += 20; ctx.lineTo(x, y + Math.random()*4-2); }
+        ctx.stroke();
+      }
+      // Floral/soft motif corners
+      ctx.font = '28px serif';
+      ctx.globalAlpha = 0.35;
+      ctx.fillText('🌸', 10, 36);
+      ctx.fillText('🌿', w - 44, 36);
+      ctx.fillText('🌿', 10, h - 12);
+      ctx.fillText('🌸', w - 44, h - 12);
+      ctx.globalAlpha = 1;
+    },
+    bg: '#EEF4FF'
+  },
+  cosmic: {
+    apply: (ctx, w, h, img) => {
+      // Dark background first
+      ctx.fillStyle = '#08041A';
+      ctx.fillRect(0, 0, w, h);
+      // Nebula gradient background
+      const nb1 = ctx.createRadialGradient(w*0.3, h*0.3, 0, w*0.3, h*0.3, h*0.6);
+      nb1.addColorStop(0, 'rgba(80,20,140,0.6)');
+      nb1.addColorStop(0.5, 'rgba(20,10,80,0.3)');
+      nb1.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = nb1;
+      ctx.fillRect(0, 0, w, h);
+      const nb2 = ctx.createRadialGradient(w*0.8, h*0.7, 0, w*0.8, h*0.7, h*0.5);
+      nb2.addColorStop(0, 'rgba(20,80,180,0.4)');
+      nb2.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = nb2;
+      ctx.fillRect(0, 0, w, h);
+      // Stars
+      for (let i = 0; i < 120; i++) {
+        const x = Math.random() * w, y = Math.random() * h;
+        const r2 = Math.random() * 1.5;
+        const alpha = Math.random() * 0.8 + 0.2;
+        ctx.beginPath();
+        ctx.arc(x, y, r2, 0, Math.PI*2);
+        const hue = Math.random() > 0.5 ? 'rgba(200,180,255,' : 'rgba(180,220,255,';
+        ctx.fillStyle = hue + alpha + ')';
+        ctx.fill();
+      }
+      // Draw pet image with composite
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.82;
+      ctx.drawImage(img, 0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      // Purple glow on pet
+      const gl = ctx.createRadialGradient(w/2, h*0.45, 0, w/2, h*0.45, h*0.45);
+      gl.addColorStop(0, 'rgba(160,80,255,0.25)');
+      gl.addColorStop(0.6, 'rgba(80,20,180,0.12)');
+      gl.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(0, 0, w, h);
+      // Blue glow from below
+      const gl2 = ctx.createRadialGradient(w/2, h*0.85, 0, w/2, h*0.85, h*0.5);
+      gl2.addColorStop(0, 'rgba(40,120,255,0.3)');
+      gl2.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gl2;
+      ctx.fillRect(0, 0, w, h);
+      // Stardust scatter
+      for (let i = 0; i < 60; i++) {
+        const x = Math.random() * w, y = Math.random() * h;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.random() * 1, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(220,200,255,${Math.random()*0.6})`;
+        ctx.fill();
+      }
+      // ✦ star symbol accents
+      ctx.font = '14px serif';
+      ctx.fillStyle = 'rgba(200,170,255,0.6)';
+      ctx.fillText('✦', 30, 50);
+      ctx.fillText('✦', w - 50, 80);
+      ctx.fillText('✦', 50, h - 40);
+      ctx.fillText('✦', w - 40, h - 50);
+      ctx.font = '20px serif';
+      ctx.fillStyle = 'rgba(200,170,255,0.4)';
+      ctx.fillText('✦', w/2 - 12, 35);
+    },
+    bg: '#08041A'
+  }
+};
+
+// ─── Load and render all canvases ───
+const pets = ['puppy', 'corgi', 'cat', 'rabbit'];
+const styleKeys = ['renaissance', 'oil', 'watercolour', 'cosmic'];
+const prefixes = { renaissance: 'ren', oil: 'oil', watercolour: 'wc', cosmic: 'cos' };
+
+let loadedImages = {};
+let loadingProgress = 0;
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      // If loading fails, resolve with null and we'll draw a placeholder
+      resolve(null);
+    };
+    img.src = src;
+  });
+}
+
+function drawPlaceholder(ctx, w, h, style, petName) {
+  const bgs = {
+    renaissance: ['#3D1C02', '#7A3A10', '#C17D3C'],
+    oil:         ['#0D1B2A', '#1B3A5C', '#2E5D8A'],
+    watercolour: ['#D8EEF5', '#A5CFDF', '#BEEEDD'],
+    cosmic:      ['#0D0D1A', '#1A0D2E', '#2D0A4E']
+  };
+  const colors = bgs[style] || bgs.renaissance;
+  const grd = ctx.createLinearGradient(0, 0, w, h);
+  grd.addColorStop(0, colors[0]);
+  grd.addColorStop(0.5, colors[1]);
+  grd.addColorStop(1, colors[2]);
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, w, h);
+
+  const emojis = { puppy: '🐕', corgi: '🐕', cat: '🐈', rabbit: '🐇' };
+  ctx.font = '80px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(emojis[petName] || '🐾', w/2, h/2 + 30);
+  ctx.textAlign = 'left';
+}
+
+async function renderAllPortraits() {
+  const bar = document.getElementById('loadingBar');
+  const loadTxt = document.getElementById('loadingText');
+
+  const messages = ['Loading pet photos…', 'Preparing royal palettes…', 'Mixing cosmic pigments…', 'Almost ready…'];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % messages.length;
+    loadTxt.textContent = messages[msgIdx];
+  }, 800);
+
+  // Load all images
+  let loaded = 0;
+  const total = pets.length;
+  for (const pet of pets) {
+    loadedImages[pet] = await loadImage(IMAGES[pet]);
+    loaded++;
+    bar.style.width = (loaded / total * 50) + '%';
+  }
+
+  // Render all canvases
+  let rendered = 0;
+  const totalRender = styleKeys.length * pets.length;
+
+  for (const style of styleKeys) {
+    const prefix = prefixes[style];
+    for (const pet of pets) {
+      const canvasId = `c-${prefix}-${pet}`;
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) { rendered++; continue; }
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      if (loadedImages[pet]) {
+        STYLES[style].apply(ctx, w, h, loadedImages[pet]);
+      } else {
+        drawPlaceholder(ctx, w, h, style, pet);
+      }
+      rendered++;
+      bar.style.width = (50 + rendered / totalRender * 50) + '%';
+      // Yield to browser to avoid blocking
+      await new Promise(r => setTimeout(r, 10));
+    }
+  }
+
+  clearInterval(msgInterval);
+  bar.style.width = '100%';
+  await new Promise(r => setTimeout(r, 400));
+
+  // Hide loading overlay
+  document.getElementById('loadingOverlay').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }, 900);
+
+  // Trigger scroll animations
+  initScrollObserver();
+}
+
+// ─── Scroll animations ───
+function initScrollObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.portrait-wrap, .style-heading').forEach(el => {
+    observer.observe(el);
+  });
+}
+
+// ─── Tab navigation ───
+function scrollToStyle(style) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const el = document.getElementById('section-' + style);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── Start ───
+window.addEventListener('load', renderAllPortraits);
+</script>
+</body>
+</html>
