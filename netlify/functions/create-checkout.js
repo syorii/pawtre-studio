@@ -1,6 +1,5 @@
 // ─────────────────────────────────────────────
 // Pawtré Studio — Stripe Checkout Function
-// Netlify Serverless Function
 // ─────────────────────────────────────────────
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,9 +11,9 @@ exports.handler = async function(event) {
   }
 
   try {
-    const { items, customerEmail, portraitUrl } = JSON.parse(event.body);
+    const { items, customerEmail, portraitUrl, frameColor } = JSON.parse(event.body);
 
-    // ── Build line items from what the customer selected ──
+    // ── Product catalogue (matches Prodigi SKUs in fulfill-order.js) ──
     const lineItemMap = {
       digital: {
         price_data: {
@@ -24,7 +23,7 @@ exports.handler = async function(event) {
             description: 'High-resolution 4K digital file. Instant delivery via email.',
             images: ['https://pawtrestudio.com/pet_puppy.png'],
           },
-          unit_amount: 1900, // $19.00 in cents
+          unit_amount: 1900,
         },
         quantity: 1,
       },
@@ -32,11 +31,11 @@ exports.handler = async function(event) {
         price_data: {
           currency: 'aud',
           product_data: {
-            name: 'Pawtré Studio — Printed & Framed Portrait',
-            description: 'Premium giclée print 12×16", choice of frame, ships in 5–7 days. Digital file included.',
+            name: 'Pawtré Studio — Framed Portrait 12×16"',
+            description: 'Premium giclée print in your choice of frame. Ships in 5–7 days. Digital file included.',
             images: ['https://pawtrestudio.com/pet_puppy.png'],
           },
-          unit_amount: 8900, // $89.00 in cents
+          unit_amount: 8900,
         },
         quantity: 1,
       },
@@ -44,28 +43,16 @@ exports.handler = async function(event) {
         price_data: {
           currency: 'aud',
           product_data: {
-            name: 'Pawtré Studio — Grand Canvas Portrait',
-            description: 'Gallery canvas 20×24", hand-stretched, varnished finish. Certificate of authenticity included.',
+            name: 'Pawtré Studio — Gallery Canvas 20×24"',
+            description: 'Hand-stretched canvas with varnished finish. Certificate of authenticity included.',
             images: ['https://pawtrestudio.com/pet_puppy.png'],
           },
-          unit_amount: 14900, // $149.00 in cents
-        },
-        quantity: 1,
-      },
-      goldframe: {
-        price_data: {
-          currency: 'aud',
-          product_data: {
-            name: 'Gold Leaf Frame Upgrade',
-            description: 'Upgrade your frame to a premium gold leaf finish.',
-          },
-          unit_amount: 2000, // $20.00 in cents
+          unit_amount: 14900,
         },
         quantity: 1,
       },
     };
 
-    // Build the line items array from what was selected
     const selectedLineItems = items
       .map(item => lineItemMap[item])
       .filter(Boolean);
@@ -77,25 +64,24 @@ exports.handler = async function(event) {
       };
     }
 
-    // ── Create Stripe Checkout Session ──
+    // ── Determine the primary product for Prodigi fulfilment ──
+    let productType = "framed";
+    if (items.includes("canvas")) productType = "canvas";
+    else if (items.includes("digital") && !items.includes("framed")) productType = "digital";
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: selectedLineItems,
       mode: 'payment',
-      
-      // Where to send customer after payment
       success_url: `https://pawtrestudio.com/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://pawtrestudio.com/#studio`,
+      cancel_url:  `https://pawtrestudio.com/#studio`,
 
-      // Pre-fill customer email if we have it
       customer_email: customerEmail || undefined,
 
-      // Collect shipping address for physical products
       shipping_address_collection: {
         allowed_countries: ['AU', 'US', 'GB', 'CA', 'NZ', 'SG'],
       },
 
-      // Shipping options
       shipping_options: [
         {
           shipping_rate_data: {
@@ -121,24 +107,23 @@ exports.handler = async function(event) {
         },
       ],
 
-      // Store the portrait URL in metadata so you can access it after payment
+      // Metadata gets passed to fulfill-order.js for Prodigi
       metadata: {
         portrait_url: portraitUrl || 'pending',
-        studio: 'pawtre-studio'
+        product_type: productType,
+        frame_color:  frameColor || 'Classic Black',
+        studio:       'pawtre-studio'
       },
 
-      // Nice branding on the checkout page
       custom_text: {
         submit: {
           message: 'Your royal portrait will be prepared and shipped with care. ✦'
         }
       },
 
-      // Allow promo codes
       allow_promotion_codes: true,
     });
 
-    // Return the checkout URL to redirect the customer
     return {
       statusCode: 200,
       headers: {
@@ -147,7 +132,7 @@ exports.handler = async function(event) {
       },
       body: JSON.stringify({
         success: true,
-        url: session.url,         // Redirect customer here
+        url: session.url,
         sessionId: session.id
       })
     };
